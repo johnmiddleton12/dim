@@ -278,6 +278,13 @@ void editorMoveCursor(int key)
             if (row && E.cx < row->size) E.cx++;
             break;
     }
+    // have to get row again, since E.cy may have changed
+    // if the cursor is on an actual line, get the row
+    row = (E.cy >= E.numrows) ? NULL : &E.row[E.cy];
+    // get row size if it exists
+    int rowSize = row ? row->size : 0;
+    // snap horizontal cursor pos to row length if it's greater than row length
+    if (E.cx > rowSize) E.cx = rowSize;
 }
 
 void editorProcessKeypress()
