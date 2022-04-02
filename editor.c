@@ -13,6 +13,8 @@
 
 /*** defined things ***/
 
+#define DIM_VERSION "0.0.1"
+
 // ANDs input with 0b00011111, similar to how term handles Ctrl+(key)
 #define CTRL_KEY(k) ((k) & 0x1f)
 
@@ -216,7 +218,21 @@ void editorDrawRows(struct abuf *ab)
     int y; 
     for (y = 0; y < E.screenrows; y++)
     {
-        abAppend(ab, "~", 1);
+        // if we're at the middle of the terminal, print a message
+        if (y == E.screenrows / 2)
+        {
+            char message[80];
+            int messagelen = snprintf(message, sizeof(message),
+                "Dim editor -- version %s", DIM_VERSION);
+            // truncate if message is too long for term
+            if (messagelen > E.screencols) messagelen = E.screencols;
+            abAppend(ab, message, messagelen);
+        }
+        else
+        {
+            // print a tilda
+            abAppend(ab, "~", 1);
+        }
 
         // K command erases part of cur line
         // 3 arg erases from cursor to end of line
