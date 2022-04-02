@@ -229,6 +229,10 @@ void editorDrawRows(struct abuf *ab)
 void editorRefreshScreen()
 {
     struct abuf ab = ABUF_INIT;
+
+    // hide cursor before writing to screen
+    abAppend(&ab, "\x1b[?25l", 6);
+
     // write & STDOUT_FILENO from "unistd.h"
     // 4 arg is writing 4 bytes to the terminal
     // first byte is \x1b, the escape character (27 in decimal)
@@ -247,6 +251,9 @@ void editorRefreshScreen()
     editorDrawRows(&ab);
 
     abAppend(&ab, "\x1b[H", 3);
+
+    // show cursor again
+    abAppend(&ab, "\x1b[?25h", 6);
 
     write(STDOUT_FILENO, ab.b, ab.len);
 
