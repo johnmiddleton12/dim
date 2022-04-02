@@ -162,6 +162,27 @@ int getWindowSize(int *rows, int *cols)
 
 /*** input ***/
 
+void editorMoveCursor(char key)
+{
+    // create a switch that handles the keys h, j, k, and l to move the cursor
+    // up, down, left, and right
+    switch(key)
+    {
+        case 'h':
+            E.cx--;
+            break;
+        case 'j':
+            E.cy++;
+            break;
+        case 'k':
+            E.cy--;
+            break;
+        case 'l':
+            E.cx++;
+            break;
+    }
+}
+
 void editorProcessKeypress()
 {
     // wait for keypress
@@ -176,6 +197,12 @@ void editorProcessKeypress()
             write(STDOUT_FILENO, "\x1b[2J", 4);
             write(STDOUT_FILENO, "\x1b[H", 3);
             exit(0);
+            break;
+        case 'h':
+        case 'j':
+        case 'k':
+        case 'l':
+            editorMoveCursor(c);
             break;
     }
 }
