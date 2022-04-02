@@ -45,11 +45,18 @@ typedef struct erow {
 } erow;
 
 struct editorConfig {
+    // cursor pos
     int cx, cy;
+    // row offset (scroll)
+    int rowoff;
+    // size of terminal
     int screenrows;
     int screencols;
+    // amount of rows in file
     int numrows;
+    // array of erows for file
     erow *row;
+    // term settings
     struct termios orig_termios;
 };
 
@@ -257,7 +264,7 @@ void editorMoveCursor(int key)
             if (E.cy != 0) E.cy--;
             break;
         case ARROW_DOWN:
-            if (E.cy != E.screenrows - 1) E.cy++;
+            if (E.cy < E.numrows) E.cy++;
             break;
         case ARROW_LEFT:
             if (E.cx != 0) E.cx--;
@@ -382,13 +389,28 @@ void abFree(struct abuf *ab)
 
 /*** output ***/
 
+void editorScroll()
+{
+    // if cursor is above screen, scroll up
+    if (E.cy < E.rowoff)
+    {
+        E.rowoff = E.cy;
+    }
+    // if cursor is below screen, scroll down
+    if (E.cy >= E.rowoff + E.screenrows)
+    {
+        E.rowoff = E.cy - E.screenrows + 1;
+    }
+}
+
 void editorDrawRows(struct abuf *ab)
 {
     int y; 
     for (y = 0; y < E.screenrows; y++)
     {
-        // check if we are drawing a row part of the text buffer or line after it
-        if (y >= E.numrows) 
+        // check where user is scrolled to
+        int filerow = y + E.rowoff;
+        if (filerow >= E.numrows) 
         {
             // if we're at the middle of the terminal, print a message
             if (E.numrows == 0 && y == E.screenrows / 2)
@@ -420,9 +442,9 @@ void editorDrawRows(struct abuf *ab)
         }
         else
         {
-            int len = E.row[y].size;
+            int len = E.row[filerow].size;
             if (len > E.screencols) len = E.screencols;
-            abAppend(ab, E.row[y].chars, len);
+            abAppend(ab, E.row[filerow].chars, len);
         }
 
 
@@ -440,6 +462,8 @@ void editorDrawRows(struct abuf *ab)
 
 void editorRefreshScreen()
 {
+    editorScroll();
+
     struct abuf ab = ABUF_INIT;
 
     // hide cursor before writing to screen
@@ -467,7 +491,7 @@ void editorRefreshScreen()
 
     // put cursor at stored loc, term is 1-indexed, we are 0-indexed
     char buf[32];
-    snprintf(buf, sizeof(buf), "\x1b[%d;%dH", E.cy + 1, E.cx + 1);
+    snprintf(buf, sizeof(buf), "\x1b[%d;%dH", (E.cy - E.rowoff) + 1, E.cx + 1);
     abAppend(&ab, buf, strlen(buf));
 
     // show cursor again
@@ -486,6 +510,7 @@ void initEditor()
     // fields for cursor pos
     E.cx = 0;
     E.cy = 0;
+    E.rowoff = 0;
     E.numrows = 0;
     E.row = NULL;
 
