@@ -226,6 +226,18 @@ void editorDrawRows(struct abuf *ab)
                 "Dim editor -- version %s", DIM_VERSION);
             // truncate if message is too long for term
             if (messagelen > E.screencols) messagelen = E.screencols;
+
+            // add padding to center message
+            // E.screencols / 2 - messagelen / 2,
+            // which equals:
+            int padding = (E.screencols - messagelen) / 2;
+            if (padding)
+            {
+                abAppend(ab, "~", 1);
+                padding--;
+            }
+            while(padding--) abAppend(ab, " ", 1);
+
             abAppend(ab, message, messagelen);
         }
         else
