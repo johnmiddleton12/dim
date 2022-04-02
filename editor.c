@@ -382,7 +382,7 @@ void editorDrawRows(struct abuf *ab)
         if (y >= E.numrows) 
         {
             // if we're at the middle of the terminal, print a message
-            if (y == E.screenrows / 2)
+            if (E.numrows == 0 && y == E.screenrows / 2)
             {
                 char message[80];
                 int messagelen = snprintf(message, sizeof(message),
