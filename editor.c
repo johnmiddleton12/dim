@@ -105,6 +105,32 @@ char editorReadKey()
         if (nread == -1 && errno != EAGAIN) die("read");
     }
 
+    // map arrow keys to cursor moving functionality
+    // weird approach, but works
+    // if c is an arrow key, return h j k or l depending on which arrow key
+    if (c == '\x1b')
+    {
+        char seq[3];
+
+        if (read(STDIN_FILENO, &seq[0], 1) != 1) return '\x1b';
+        if (read(STDIN_FILENO, &seq[1], 1) != 1) return '\x1b';
+
+        if (seq[0] == '[')
+        {
+            // arrow keys send bytes '\x1b[' followed by 'A', 'B', 'C', or 'D'
+            if (seq[1] == 'A') return 'k';
+            if (seq[1] == 'B') return 'j';
+            if (seq[1] == 'C') return 'l';
+            if (seq[1] == 'D') return 'h';
+        }
+
+        return '\x1b';
+    }
+    else
+    {
+        return c;
+    }
+
     return c;
 }
 
