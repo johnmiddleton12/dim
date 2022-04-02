@@ -257,7 +257,10 @@ int getWindowSize(int *rows, int *cols)
 
 void editorMoveCursor(int key)
 {
-    // create a switch that handles the keys h, j, k, and l to move the cursor
+    // check if cursor is on an actua line, if it is get the row
+    erow *row = (E.cy >= E.numrows) ? NULL : &E.row[E.cy];
+
+    // create a switch that handles the keys to move the cursor
     // up, down, left, and right
     switch(key)
     {
@@ -271,7 +274,8 @@ void editorMoveCursor(int key)
             if (E.cx != 0) E.cx--;
             break;
         case ARROW_RIGHT:
-            E.cx++;
+            // only move right on a row with text if the cursor is not at the end + 1
+            if (row && E.cx < row->size) E.cx++;
             break;
     }
 }
