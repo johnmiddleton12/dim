@@ -7,8 +7,9 @@
 #include <termios.h>
 #include <unistd.h>
 
-// gross sys include 🤨
+// gross sys includes 🤨
 #include <sys/ioctl.h>
+#include <sys/types.h>
 
 /*** defined things ***/
 
@@ -31,10 +32,19 @@ enum editorKey {
 
 /*** data objs ***/
 
+// typedef allows to define a new type, use as erow instead of struct erow
+// erow is editor row
+typedef struct erow {
+    int size;
+    char *chars;
+} erow;
+
 struct editorConfig {
     int cx, cy;
     int screenrows;
     int screencols;
+    int numrows;
+    erow row;
     struct termios orig_termios;
 };
 
@@ -174,6 +184,11 @@ int editorReadKey()
         return c;
     }
 
+    if (c == 'h') return ARROW_LEFT;
+    if (c == 'j') return ARROW_DOWN;
+    if (c == 'k') return ARROW_UP;
+    if (c == 'l') return ARROW_RIGHT;
+
     return c;
 }
 
@@ -238,28 +253,16 @@ void editorMoveCursor(int key)
     switch(key)
     {
         case ARROW_UP:
-            E.cy--;
+            if (E.cy != 0) E.cy--;
             break;
         case ARROW_DOWN:
-            E.cy++;
+            if (E.cy != E.screenrows - 1) E.cy++;
             break;
         case ARROW_LEFT:
-            E.cx--;
+            if (E.cx != 0) E.cx--;
             break;
         case ARROW_RIGHT:
-            E.cx++;
-            break;
-        case 'h':
-            E.cx--;
-            break;
-        case 'j':
-            E.cy++;
-            break;
-        case 'k':
-            E.cy--;
-            break;
-        case 'l':
-            E.cx++;
+            if (E.cx != E.screencols - 1) E.cx++;
             break;
     }
 }
@@ -298,10 +301,6 @@ void editorProcessKeypress()
             }
             break;
         
-        case 'h':
-        case 'j':
-        case 'k':
-        case 'l':
         case ARROW_LEFT:
         case ARROW_RIGHT:
         case ARROW_UP:
@@ -309,6 +308,21 @@ void editorProcessKeypress()
             editorMoveCursor(c);
             break;
     }
+}
+
+/*** file input and output ***/
+
+void editorOpen()
+{
+    char* line = "Hello world!";
+
+    ssize_t linelen = strlen(line);
+
+    E.row.size = linelen;
+    E.row.chars = malloc(linelen + 1);
+    memcpy(E.row.chars, line, linelen);
+    E.row.chars[linelen] = '\0';
+    E.numrows = 1;
 }
 
 /*** append buffer ***/
@@ -438,6 +452,7 @@ void initEditor()
     // fields for cursor pos
     E.cx = 0;
     E.cy = 0;
+    E.numrows = 0;
 
     if (getWindowSize(&E.screenrows, &E.screencols) == -1) die("getWindowSize");
 }
