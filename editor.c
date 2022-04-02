@@ -218,6 +218,10 @@ void editorDrawRows(struct abuf *ab)
     {
         abAppend(ab, "~", 1);
 
+        // K command erases part of cur line
+        // 3 arg erases from cursor to end of line
+        abAppend(ab, "\x1b[K", 3);
+
         // dont write new line on last line
         if (y < E.screenrows - 1)
         {
@@ -242,7 +246,10 @@ void editorRefreshScreen()
     // J command clears the screen
     // arg for J is 2, which says clear the whole screen
     /*write(STDOUT_FILENO, "\x1b[2J", 4);*/
-    abAppend(&ab, "\x1b[2J", 4);
+
+    // we want to clear a line as its being written, and this clears whole
+    // screen, moved to editorDrawRows()
+    /*abAppend(&ab, "\x1b[2J", 4);*/
 
     // H command moves cursor
     // default args for it are 1, 1
