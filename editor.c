@@ -21,6 +21,7 @@
 /*** data objs ***/
 
 struct editorConfig {
+    int cx, cy;
     int screenrows;
     int screencols;
     struct termios orig_termios;
@@ -285,7 +286,10 @@ void editorRefreshScreen()
 
     editorDrawRows(&ab);
 
-    abAppend(&ab, "\x1b[H", 3);
+    // put cursor at stored loc, term is 1-indexed, we are 0-indexed
+    char buf[32];
+    snprintf(buf, sizeof(buf), "\x1b[%d;%dH", E.cy + 1, E.cx + 1);
+    abAppend(&ab, buf, strlen(buf));
 
     // show cursor again
     abAppend(&ab, "\x1b[?25h", 6);
@@ -300,6 +304,10 @@ void editorRefreshScreen()
 
 void initEditor()
 {
+    // fields for cursor pos
+    E.cx = 0;
+    E.cy = 0;
+
     if (getWindowSize(&E.screenrows, &E.screencols) == -1) die("getWindowSize");
 }
 
