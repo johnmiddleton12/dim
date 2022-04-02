@@ -179,10 +179,6 @@ int editorReadKey()
 
         return '\x1b';
     }
-    else
-    {
-        return c;
-    }
 
     if (c == 'h') return ARROW_LEFT;
     if (c == 'j') return ARROW_DOWN;
@@ -364,33 +360,44 @@ void editorDrawRows(struct abuf *ab)
     int y; 
     for (y = 0; y < E.screenrows; y++)
     {
-        // if we're at the middle of the terminal, print a message
-        if (y == E.screenrows / 2)
+        // check if we are drawing a row part of the text buffer or line after it
+        if (y >= E.numrows) 
         {
-            char message[80];
-            int messagelen = snprintf(message, sizeof(message),
-                "Dim editor -- version %s", DIM_VERSION);
-            // truncate if message is too long for term
-            if (messagelen > E.screencols) messagelen = E.screencols;
-
-            // add padding to center message
-            // E.screencols / 2 - messagelen / 2,
-            // which equals:
-            int padding = (E.screencols - messagelen) / 2;
-            if (padding)
+            // if we're at the middle of the terminal, print a message
+            if (y == E.screenrows / 2)
             {
-                abAppend(ab, "~", 1);
-                padding--;
-            }
-            while(padding--) abAppend(ab, " ", 1);
+                char message[80];
+                int messagelen = snprintf(message, sizeof(message),
+                    "Dim editor -- version %s", DIM_VERSION);
+                // truncate if message is too long for term
+                if (messagelen > E.screencols) messagelen = E.screencols;
 
-            abAppend(ab, message, messagelen);
+                // add padding to center message
+                // E.screencols / 2 - messagelen / 2,
+                // which equals:
+                int padding = (E.screencols - messagelen) / 2;
+                if (padding)
+                {
+                    abAppend(ab, "~", 1);
+                    padding--;
+                }
+                while(padding--) abAppend(ab, " ", 1);
+
+                abAppend(ab, message, messagelen);
+            }
+            else
+            {
+                // print a tilda
+                abAppend(ab, "~", 1);
+            }
         }
         else
         {
-            // print a tilda
-            abAppend(ab, "~", 1);
+            int len = E.row.size;
+            if (len > E.screencols) len = E.screencols;
+            abAppend(ab, E.row.chars, len);
         }
+
 
         // K command erases part of cur line
         // 3 arg erases from cursor to end of line
@@ -461,6 +468,7 @@ int main ()
 {
     enableRawMode();
     initEditor();
+    editorOpen();
 
     while (1)  
     {
