@@ -23,6 +23,7 @@ enum editorKey {
     ARROW_RIGHT,
     ARROW_UP,
     ARROW_DOWN,
+    DEL_KEY,
     HOME_KEY,
     END_KEY,
     PAGE_UP,
@@ -135,6 +136,7 @@ int editorReadKey()
                     switch (seq[1])
                     {
                         case '1': return HOME_KEY;
+                        case '3': return DEL_KEY;
                         case '4': return END_KEY;
                         case '5': return PAGE_UP;
                         case '6': return PAGE_DOWN;
@@ -248,6 +250,18 @@ void editorMoveCursor(int key)
         case ARROW_RIGHT:
             E.cx++;
             break;
+        case 'h':
+            E.cx--;
+            break;
+        case 'j':
+            E.cy++;
+            break;
+        case 'k':
+            E.cy--;
+            break;
+        case 'l':
+            E.cx++;
+            break;
     }
 }
 
@@ -284,7 +298,11 @@ void editorProcessKeypress()
                     editorMoveCursor(c == PAGE_UP ? ARROW_UP : ARROW_DOWN);
             }
             break;
-
+        
+        case 'h':
+        case 'j':
+        case 'k':
+        case 'l':
         case ARROW_LEFT:
         case ARROW_RIGHT:
         case ARROW_UP:
