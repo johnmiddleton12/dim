@@ -18,6 +18,13 @@
 // ANDs input with 0b00011111, similar to how term handles Ctrl+(key)
 #define CTRL_KEY(k) ((k) & 0x1f)
 
+enum editorKey {
+    ARROW_LEFT = 1000,
+    ARROW_RIGHT = 1001,
+    ARROW_UP = 1002,
+    ARROW_DOWN = 1003,
+};
+
 /*** data objs ***/
 
 struct editorConfig {
@@ -95,7 +102,7 @@ void enableRawMode ()
 // waits for a keypress, then returns that char 
 // this is in term function section because it uses read, 
 // a low level function for input
-char editorReadKey()
+int editorReadKey()
 {
     int nread;
     char c;
@@ -118,10 +125,13 @@ char editorReadKey()
         if (seq[0] == '[')
         {
             // arrow keys send bytes '\x1b[' followed by 'A', 'B', 'C', or 'D'
-            if (seq[1] == 'A') return 'k';
-            if (seq[1] == 'B') return 'j';
-            if (seq[1] == 'C') return 'l';
-            if (seq[1] == 'D') return 'h';
+            switch (seq[1])
+            {
+                case 'A': return ARROW_UP;
+                case 'B': return ARROW_DOWN;
+                case 'C': return ARROW_RIGHT;
+                case 'D': return ARROW_LEFT;
+            }
         }
 
         return '\x1b';
@@ -188,22 +198,22 @@ int getWindowSize(int *rows, int *cols)
 
 /*** input ***/
 
-void editorMoveCursor(char key)
+void editorMoveCursor(int key)
 {
     // create a switch that handles the keys h, j, k, and l to move the cursor
     // up, down, left, and right
     switch(key)
     {
-        case 'h':
-            E.cx--;
-            break;
-        case 'j':
-            E.cy++;
-            break;
-        case 'k':
+        case ARROW_UP:
             E.cy--;
             break;
-        case 'l':
+        case ARROW_DOWN:
+            E.cy++;
+            break;
+        case ARROW_LEFT:
+            E.cx--;
+            break;
+        case ARROW_RIGHT:
             E.cx++;
             break;
     }
@@ -212,7 +222,7 @@ void editorMoveCursor(char key)
 void editorProcessKeypress()
 {
     // wait for keypress
-    char c = editorReadKey();
+    int c = editorReadKey();
 
     // keypress logic
     switch(c)
@@ -224,10 +234,10 @@ void editorProcessKeypress()
             write(STDOUT_FILENO, "\x1b[H", 3);
             exit(0);
             break;
-        case 'h':
-        case 'j':
-        case 'k':
-        case 'l':
+        case ARROW_LEFT:
+        case ARROW_RIGHT:
+        case ARROW_UP:
+        case ARROW_DOWN:
             editorMoveCursor(c);
             break;
     }
