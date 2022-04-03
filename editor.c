@@ -271,11 +271,24 @@ void editorMoveCursor(int key)
             if (E.cy < E.numrows) E.cy++;
             break;
         case ARROW_LEFT:
-            if (E.cx != 0) E.cx--;
+            if (E.cx != 0) 
+            {
+                E.cx--;
+            }
+            else if (E.cy > 0)
+            {
+                E.cy--;
+                E.cx = E.row[E.cy].size;
+            }
             break;
         case ARROW_RIGHT:
             // only move right on a row with text if the cursor is not at the end + 1
-            if (row && E.cx < row->size) E.cx++;
+            if (row && E.cx < row->size) {
+                E.cx++;
+            } else if (row && E.cx == row->size) {
+                E.cy++;
+                E.cx = 0;
+            }
             break;
     }
     // have to get row again, since E.cy may have changed
