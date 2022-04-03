@@ -19,6 +19,7 @@
 /*** defined things ***/
 
 #define DIM_VERSION "0.0.1"
+#define DIM_TAB_STOP 8
 
 // ANDs input with 0b00011111, similar to how term handles Ctrl+(key)
 #define CTRL_KEY(k) ((k) & 0x1f)
@@ -350,14 +351,28 @@ void editorProcessKeypress()
 // takes the chars string and puts it into the render string 
 void editorUpdateRow(erow *row)
 {
-    free(row->render);
-    row->render = malloc(row->size + 1);
-
     int j;
+
+    // count tabs in string to know how much mem to alloc
+    int tabs = 0;
+    for (j = 0; j < row->size; j++)
+        if (row->chars[j] == '\t') tabs++;
+
+    free(row->render);
+    row->render = malloc(row->size + tabs*(DIM_TAB_STOP - 1) + 1);
+
     int i = 0;
     for (j = 0; j < row->size; j++)
     {
-        row->render[i++] = row->chars[j];
+        if (row->chars[j] == '\t')
+        {
+            row->render[i] = ' ';
+            while (i % DIM_TAB_STOP != 0) row->render[i++] = ' ';
+        }
+        else
+        {
+            row->render[i++] = row->chars[j];
+        }
     }
     // how terminal expects end of strings to look like
     row->render[i] = '\0';
