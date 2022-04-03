@@ -41,7 +41,9 @@ enum editorKey {
 // erow is editor row
 typedef struct erow {
     int size;
+    int rsize;
     char *chars;
+    char *render;
 } erow;
 
 struct editorConfig {
@@ -345,6 +347,23 @@ void editorProcessKeypress()
 
 /*** row operations ***/
 
+// takes the chars string and puts it into the render string 
+void editorUpdateRow(erow *row)
+{
+    free(row->render);
+    row->render = malloc(row->size + 1);
+
+    int j;
+    int i = 0;
+    for (j = 0; j < row->size; j++)
+    {
+        row->render[i++] = row->chars[j];
+    }
+    // how terminal expects end of strings to look like
+    row->render[i] = '\0';
+    row->rsize = i;
+}
+
 void editorAppendRow(char *s, size_t len)
 {
     E.row = realloc(E.row, sizeof(erow) * (E.numrows + 1));
@@ -354,6 +373,11 @@ void editorAppendRow(char *s, size_t len)
     E.row[at].chars = malloc(len + 1);
     memcpy(E.row[at].chars, s, len);
     E.row[at].chars[len] = '\0';
+
+    E.row[at].rsize = 0;
+    E.row[at].render = NULL;
+    editorUpdateRow(&E.row[at]);
+
     E.numrows++;
 }
 
@@ -478,12 +502,11 @@ void editorDrawRows(struct abuf *ab)
         }
         else
         {
-            int len = E.row[filerow].size - E.coloff;
+            int len = E.row[filerow].rsize - E.coloff;
             if (len < 0) len = 0;
             if (len > E.screencols) len = E.screencols;
-            abAppend(ab, &E.row[filerow].chars[E.coloff], len);
+            abAppend(ab, &E.row[filerow].render[E.coloff], len);
         }
-
 
         // K command erases part of cur line
         // 3 arg erases from cursor to end of line
