@@ -50,6 +50,8 @@ typedef struct erow {
 struct editorConfig {
     // cursor pos
     int cx, cy;
+    // rx
+    int rx;
     // row & col offset (scroll)
     int rowoff;
     int coloff;
@@ -348,6 +350,21 @@ void editorProcessKeypress()
 
 /*** row operations ***/
 
+int editorRowCxToRx(erow *row, int cx)
+{
+    int rx = 0;
+    int j;
+    for (j = 0; j < cx; j++)
+    {
+        if (row->chars[j] == '\t')
+        {
+            rx += (DIM_TAB_STOP - 1) - (rx % DIM_TAB_STOP);
+        }
+        rx++;
+    }
+    return rx;
+}
+
 // takes the chars string and puts it into the render string 
 void editorUpdateRow(erow *row)
 {
@@ -366,7 +383,7 @@ void editorUpdateRow(erow *row)
     {
         if (row->chars[j] == '\t')
         {
-            row->render[i] = ' ';
+            row->render[i++] = ' ';
             while (i % DIM_TAB_STOP != 0) row->render[i++] = ' ';
         }
         else
@@ -455,6 +472,13 @@ void abFree(struct abuf *ab)
 
 void editorScroll()
 {
+    E.rx = E.cx;
+
+    if (E.cy < E.numrows)
+    {
+        E.rx = editorRowCxToRx(&E.row[E.cy], E.cx);
+    }
+
     // if cursor is above screen, scroll up
     if (E.cy < E.rowoff)
     {
@@ -467,14 +491,14 @@ void editorScroll()
     }
 
     // if cursor is to the left of screen, scroll left
-    if (E.cx < E.coloff)
+    if (E.rx < E.coloff)
     {
-        E.coloff = E.cx;
+        E.coloff = E.rx;
     }
     // if cursor is to the right of screen, scroll right
-    if (E.cx >= E.coloff + E.screencols)
+    if (E.rx >= E.coloff + E.screencols)
     {
-        E.coloff = E.cx - E.screencols + 1;
+        E.coloff = E.rx - E.screencols + 1;
     }
 }
 
@@ -566,7 +590,7 @@ void editorRefreshScreen()
 
     // put cursor at stored loc, term is 1-indexed, we are 0-indexed
     char buf[32];
-    snprintf(buf, sizeof(buf), "\x1b[%d;%dH", (E.cy - E.rowoff) + 1, (E.cx - E.coloff) + 1);
+    snprintf(buf, sizeof(buf), "\x1b[%d;%dH", (E.cy - E.rowoff) + 1, (E.rx - E.coloff) + 1);
     abAppend(&ab, buf, strlen(buf));
 
     // show cursor again
@@ -584,6 +608,7 @@ void initEditor()
 {
     // fields for cursor pos
     E.cx = 0;
+    E.rx = 0;
     E.cy = 0;
     E.rowoff = 0;
     E.coloff = 0;
